@@ -1,3 +1,4 @@
+import {subscribeJobChanges} from './job-subscription.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { toEdgeRequest } from './supabase-api-core.mjs';
 
@@ -100,10 +101,7 @@ async function bootstrapFirstAdmin(input) {
 }
 
 function subscribeJobs(onChange,onStatus=()=>{}) {
-  const channel = getClient().channel('shinetime-jobs-live')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'st_job_signals' }, onChange)
-    .subscribe(onStatus);
-  return () => getClient().removeChannel(channel);
+  return subscribeJobChanges(getClient(),onChange,onStatus);
 }
 
 async function resetPassword(email){

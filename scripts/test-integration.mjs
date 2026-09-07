@@ -1,3 +1,4 @@
+import {subscribeJobChanges} from '../assets/job-subscription.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {writeFile} from 'node:fs/promises';
@@ -49,11 +50,13 @@ try{
  const {data:{session:realtimeSession}}=await clients[cleaner].auth.getSession();
  await clients[cleaner].realtime.setAuth(realtimeSession.access_token);
  const events=[];
- const channel=clients[cleaner].channel('integration-job-signals').on('postgres_changes',{event:'*',schema:'public',table:'st_job_signals',filter:`job_id=eq.${booking.id}`},payload=>events.push(payload));
- channels.push([clients[cleaner],channel]);
  await new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>reject(new Error('Realtime subscription timeout')),20000);
-  channel.subscribe(status=>{if(status==='SUBSCRIBED'){clearTimeout(timer);resolve();}else if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)){clearTimeout(timer);reject(new Error(`Realtime ${status}`));}});
+  const timer=setTimeout(()=>reject(new Error('Realtime listener readiness timeout')),30000);
+  const stop=subscribeJobChanges(clients[cleaner],payload=>{if(payload)events.push(payload);},status=>{
+   if(status==='SUBSCRIBED'){clearTimeout(timer);resolve();}
+   else if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)){clearTimeout(timer);reject(new Error(`Realtime ${status}`));}
+  });
+  channels.push(stop);
  });
  for(const status of ['EN_ROUTE','ARRIVED','CLEANING'])await api(cleaner,`${path}/status`,'POST',{status,requestId:crypto.randomUUID()});
  for(let attempt=0;events.length===0&&attempt<100;attempt++)await new Promise(r=>setTimeout(r,100));
@@ -83,4 +86,4 @@ try{
  await assert.rejects(api(3,'admin/settings'),/403|Forbidden|permission/i);
  const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false};
  await writeFile('artifacts/integration-result.json',JSON.stringify(report,null,2));console.log(report);
-}finally{for(const [client,channel] of channels)await client.removeChannel(channel);await db.end();for(const client of clients)await client.auth.signOut();}
+}finally{for(const stop of channels)await stop();await db.end();for(const client of clients)await client.auth.signOut();}
