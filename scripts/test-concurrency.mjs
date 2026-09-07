@@ -24,6 +24,20 @@ try {
  await Promise.all(Array.from({length:50},()=>db.query("select st_job_command($1,$2,'complete','{}',$3)",[actor,job.id,key])));
  assert.equal((await db.query("select count(*)::int n from st_job_events where job_id=$1 and event_type='COMPLETED'",[job.id])).rows[0].n,1);
  assert.equal((await db.query('select completed_jobs from st_cleaners where id=$1',[winner.assigned_cleaner_id])).rows[0].completed_jobs,1);
- const report={engine:'Native PostgreSQL',simultaneousRequests:50,claimWinners:1,duplicateCompletions:50,completionEvents:1,durationMs:Math.round(performance.now()-began)};
+ const contentionMs=Math.round(performance.now()-began);
+ await db.exec(`
+ insert into auth.users(id,email) select gen_random_uuid(),'load-'||g||'@test.invalid' from generate_series(1,50) g;
+ insert into st_users(auth_user_id,email,role,full_name) select id,email,'CLEANER','Synthetic load cleaner' from auth.users where email like 'load-%';
+ insert into st_cleaners(user_id,max_jobs_day) select id,5 from st_users where email like 'load-%';
+ insert into st_cleaner_availability(cleaner_id,service_date,online,from_time,to_time) select c.id,current_date+1,true,'08:00','20:00' from st_cleaners c join st_users u on u.id=c.user_id where u.email like 'load-%';
+ insert into st_objects(client_id,code,name,address,checkout_time,deadline_time) select 1,'LOAD-'||g,'Synthetic load property','Test only','08:00','20:00' from generate_series(1,50) g;
+ insert into st_jobs(object_id,client_id,service_date,earliest_start,deadline,duration_minutes,planned_start,status) select id,1,current_date+1,'08:00','20:00',60,'11:00','UNASSIGNED' from st_objects where code like 'LOAD-%';`);
+ const {rows:independent}=await db.query("select j.id job_id,u.id actor_id from st_jobs j join st_objects o on o.id=j.object_id join st_users u on u.email=lower(o.code)||'@test.invalid' where o.code like 'LOAD-%'");
+ assert.equal(independent.length,50);
+ const independentStart=performance.now();
+ await Promise.all(independent.map(j=>db.query("select st_job_command($1,$2,'accept','{}',$3)",[j.actor_id,j.job_id,crypto.randomUUID()])));
+ const independentMs=Math.round(performance.now()-independentStart);
+ assert.equal((await db.query("select count(*)::int n from st_jobs j join st_objects o on o.id=j.object_id where o.code like 'LOAD-%' and j.status='ACCEPTED'")).rows[0].n,50);
+ const report={engine:'Native PostgreSQL',simultaneousRequests:50,claimWinners:1,duplicateCompletions:50,completionEvents:1,contentionMs,independentJobs:50,independentMs};
  await mkdir('artifacts',{recursive:true});await writeFile('artifacts/concurrency.json',JSON.stringify(report,null,2)+'\n');console.log(report);
 }finally{await pool.end();}
