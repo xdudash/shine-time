@@ -18,7 +18,7 @@ try {
  assert.equal(results.filter(r=>r.status==='fulfilled').length,1,'Exactly one claim must win');
  for(const r of results.filter(r=>r.status==='rejected'))assert.match(r.reason.message,/not available|already accepted/i);
  const {rows:[winner]}=await db.query('select assigned_cleaner_id from st_jobs where id=$1',[job.id]);
- const actor=winner.assigned_cleaner_id===1?2:3;
+ const actor=Number(winner.assigned_cleaner_id)===1?2:3;
  await db.query("update st_jobs set status='CLEANING' where id=$1",[job.id]);
  const key=crypto.randomUUID();
  await Promise.all(Array.from({length:50},()=>db.query("select st_job_command($1,$2,'complete','{}',$3)",[actor,job.id,key])));
