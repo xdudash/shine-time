@@ -44,6 +44,10 @@ try{
  const privateJobs=await clients[cleaner].from('st_jobs').select('*');
  assert.ok(privateJobs.error || privateJobs.data.length===0,'Raw jobs must not expose private data');
  await assert.rejects(api(unrelated,path),/403|404|assigned|Forbidden|access/i);
+ const allowedRows=await clients[cleaner].from('st_job_signals').select('*').eq('job_id',booking.id);
+ assert.ifError(allowedRows.error);assert.equal(allowedRows.data.length,1,'Assigned user must pass signal RLS');
+ const {data:{session:realtimeSession}}=await clients[cleaner].auth.getSession();
+ await clients[cleaner].realtime.setAuth(realtimeSession.access_token);
  const events=[];
  const channel=clients[cleaner].channel('integration-job-signals').on('postgres_changes',{event:'*',schema:'public',table:'st_job_signals',filter:`job_id=eq.${booking.id}`},payload=>events.push(payload));
  channels.push([clients[cleaner],channel]);
@@ -53,6 +57,11 @@ try{
  });
  for(const status of ['EN_ROUTE','ARRIVED','CLEANING'])await api(cleaner,`${path}/status`,'POST',{status,requestId:crypto.randomUUID()});
  for(let attempt=0;events.length===0&&attempt<100;attempt++)await new Promise(r=>setTimeout(r,100));
+ if(!events.length){
+  console.log('Realtime diagnostics',JSON.stringify({publication:(await db.query("select tablename from pg_publication_tables where pubname='supabase_realtime'")).rows,slots:(await db.query('select slot_name,active from pg_replication_slots')).rows,signal:(await db.query('select * from st_job_signals where job_id=$1',[booking.id])).rows}));
+  const names=execFileSync('docker',['ps','--format','{{.Names}}'],{encoding:'utf8'}).trim().split('\n').filter(n=>n.startsWith('supabase_realtime_'));
+  for(const name of names){const logs=execFileSync('docker',['logs','--tail','150',name],{encoding:'utf8',stdio:['ignore','pipe','pipe']});console.log(logs.split('\n').filter(line=>/error|Error|fail|Fail/.test(line)).map(line=>line.replace(/eyJ[A-Za-z0-9_.-]+/g,'[JWT redacted]')).join('\n'));}
+ }
  assert.ok(events.length>0,'Assigned cleaner must receive real Realtime job changes');
  for(const event of events)assert.deepEqual(Object.keys(event.new).sort(),['changed_at','job_id']);
  for(const item of (await db.query('select id from st_job_checklist where job_id=$1',[booking.id])).rows)await api(cleaner,`${path}/checklist/${item.id}`,'PATCH',{completed:true});
