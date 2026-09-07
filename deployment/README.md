@@ -33,5 +33,11 @@ objects whose upload permission expired over 48 hours ago, 100 per call. It neve
 removes evidence referenced by a job. Legacy untracked objects are not swept.
 
 Money records are an accounting ledger. They do not initiate bank/card transfers.
-Native PostgreSQL concurrency and real Auth/Storage acceptance are still required;
-PGlite results alone do not certify production capacity.
+Native PostgreSQL contention and 50 independent concurrent jobs passed in GitHub
+Actions run 34155083282. Real Auth/Storage acceptance and release gates remain.
+Database-only results do not certify production capacity.
+
+The verify workflow produces the hostinger-frontend artifact with a minimal ZIP
+and SHA-256 file manifest. It excludes legacy setup scripts, SQL, Node dependencies
+and backend sources. Extract into the existing /app only after the release gates;
+preserve the existing .htaccess and back up the current directory first.
