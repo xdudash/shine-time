@@ -9,6 +9,7 @@ const admin=createClient(config.API_URL,config.SERVICE_ROLE_KEY,{auth:{persistSe
 const db=new pg.Client({connectionString:config.DB_URL});await db.connect();
 const roles=['ADMIN','CLEANER','CLEANER','OWNER','PROPERTY_MANAGER','OPERATIONS_MANAGER'];
 const clients=[];
+const channels=[];
 async function api(index,route,method='GET',body={},query={}){
  const {data:{session}}=await clients[index].auth.getSession();
  const res=await fetch(`${config.API_URL}/functions/v1/st-api`,{method:'POST',headers:{apikey:config.ANON_KEY,Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({route,method,body,query,clientBuild:'2026-09-07-scale1'})});
@@ -37,7 +38,23 @@ try{
  assert.equal(booking.status,'ACCEPTED');
  const cleaner=Number(booking.assigned_cleaner_id);
  const path=`cleaner/jobs/${booking.id}`;
+ const unrelated=cleaner===1?2:1;
+ const deniedRows=await clients[unrelated].from('st_job_signals').select('*').eq('job_id',booking.id);
+ assert.ifError(deniedRows.error);assert.deepEqual(deniedRows.data,[]);
+ const privateJobs=await clients[cleaner].from('st_jobs').select('*');
+ assert.ok(privateJobs.error || privateJobs.data.length===0,'Raw jobs must not expose private data');
+ await assert.rejects(api(unrelated,path),/403|404|assigned|Forbidden|access/i);
+ const events=[];
+ const channel=clients[cleaner].channel('integration-job-signals').on('postgres_changes',{event:'*',schema:'public',table:'st_job_signals',filter:`job_id=eq.${booking.id}`},payload=>events.push(payload));
+ channels.push([clients[cleaner],channel]);
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new Error('Realtime subscription timeout')),20000);
+  channel.subscribe(status=>{if(status==='SUBSCRIBED'){clearTimeout(timer);resolve();}else if(['CHANNEL_ERROR','TIMED_OUT'].includes(status)){clearTimeout(timer);reject(new Error(`Realtime ${status}`));}});
+ });
  for(const status of ['EN_ROUTE','ARRIVED','CLEANING'])await api(cleaner,`${path}/status`,'POST',{status,requestId:crypto.randomUUID()});
+ for(let attempt=0;events.length===0&&attempt<100;attempt++)await new Promise(r=>setTimeout(r,100));
+ assert.ok(events.length>0,'Assigned cleaner must receive real Realtime job changes');
+ for(const event of events)assert.deepEqual(Object.keys(event.new).sort(),['changed_at','job_id']);
  for(const item of (await db.query('select id from st_job_checklist where job_id=$1',[booking.id])).rows)await api(cleaner,`${path}/checklist/${item.id}`,'PATCH',{completed:true});
  await assert.rejects(api(cleaner,`${path}/complete`,'POST',{requestId:crypto.randomUUID()}),/photo/i);
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aBZkAAAAASUVORK5CYII=','base64');
@@ -55,6 +72,6 @@ try{
  const settlement=await api(0,'admin/settlements','GET',{}, {month:date.slice(0,7)});
  assert.equal(settlement.summary.dueCents,0);assert.equal(settlement.summary.payableCents,0);
  await assert.rejects(api(3,'admin/settings'),/403|Forbidden|permission/i);
- const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,productionTouched:false};
+ const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false};
  await writeFile('artifacts/integration-result.json',JSON.stringify(report,null,2));console.log(report);
-}finally{await db.end();for(const client of clients)await client.auth.signOut();}
+}finally{for(const [client,channel] of channels)await client.removeChannel(channel);await db.end();for(const client of clients)await client.auth.signOut();}
