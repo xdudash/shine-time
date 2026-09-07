@@ -1,18 +1,22 @@
-# Shine Time Operations v4 — Hostinger shell, Supabase backend
+# Shine Time Operations
 
-This is the original v4 PWA interface repackaged for normal Hostinger shared hosting. It is not a ChatGPT Site and not a visual mockup.
+Cleaning operations platform: Hostinger frontend, Supabase backend.
 
-## Runtime split
+## Components
 
-| Component | Responsibility |
-| --- | --- |
-| Hostinger `public_html/app` | domain, PHP entry page, PWA files, cached UI assets |
-| Supabase Auth | ADMIN/OPERATIONS_MANAGER/CLEANER/OWNER/PROPERTY_MANAGER sign-in and sessions |
-| Supabase Edge Function `st-api` | authorization, v4 API contract, account administration, write operations |
-| Supabase PostgreSQL | jobs, properties, routes, checklists, incidents, finance, notifications |
-| Supabase Storage | protected proof photos |
-| Supabase Realtime | concurrent job updates without polling |
+- Hostinger `/app`: PHP entry page, mobile PWA, static assets.
+- Supabase Auth: administrator, operations manager, cleaner, owner and property manager.
+- Edge Function `st-api`: authenticated API and role-scoped responses.
+- PostgreSQL: transactional assignment and completion, recurring jobs, exact financial records.
+- Private Storage: signed photo/video reports with verified finalization.
+- Realtime: scoped invalidation events and periodic reconciliation.
 
-The browser has only a Supabase publishable key. Database tables have RLS enabled; all business writes use the verified Edge Function with server-side role checks.
+## Verification
 
-See `HOSTINGER_SETUP.md` for the upload and first-admin steps.
+Run `npm ci`, `npm test`, and `npm run build`.
+GitHub Actions also starts native PostgreSQL 17 for concurrent job-command tests
+and checks financial aggregates against 100,000 synthetic jobs.
+
+See [verification status](docs/STATUS.md) and [deployment procedure](deployment/README.md).
+Production deployment is separate from uploading this repository. Existing customer
+data must be preserved; do not reinstall the baseline schema on the production database.

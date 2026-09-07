@@ -12,6 +12,10 @@ and checklist writes; retention-aware cleanup of unreferenced expired uploads.
 The previous photo API and browser build remain compatible during rollout.
 
 Verified:
+- GitHub repository: https://github.com/xdudash/shine-time (private).
+- Native PostgreSQL 17 contention test passed: 50 concurrent claims, one winner;
+  50 repeated completions, one event. CI run 34154958770 completed successfully.
+  This tests database correctness, not live Auth/Storage or an end-to-end SLA.
 - 40 automated tests pass, none skipped. SQL tests use isolated PGlite PostgreSQL.
 - Full database workflow: owner booking, automatic assignment, status transitions,
   checklist, required photo, completion, client payment and cleaner payout.
@@ -23,9 +27,6 @@ Verified:
 - Frontend build, Edge Function bundle and PHP syntax checks pass.
 
 Mandatory release gates still open:
-- Native PostgreSQL simultaneous-request test (50 connections). Runnable script and
-  GitHub Actions workflow included, but no native database or connected repository
-  is available in this environment. PGlite serializes sessions.
 - Staging roundtrip with real Supabase Auth, Storage, Realtime and all five roles.
 - Full localization acceptance, exports and remaining operational history review.
 - Backup/restore drill and operational monitoring/alert configuration.
