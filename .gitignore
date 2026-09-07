@@ -1,0 +1,7 @@
+node_modules/
+.superpowers/
+.env*
+test-results/
+playwright-report/
+dist/
+artifacts/
