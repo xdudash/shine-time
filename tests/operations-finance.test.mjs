@@ -49,6 +49,8 @@ test('settlement pages cover history without changing full-month totals',async()
 
 test('recurring worker isolates an invalid schedule and safely repeats successful runs',async()=>{
  const db=await setup();try{
+ // The worker uses Bratislava service dates even when the database runs in UTC.
+ await db.exec("set time zone 'Europe/Bratislava'");
  await db.exec("insert into st_recurring(object_id,created_by_user_id,start_date,weekdays,planned_start) values(1,1,current_date+1,array[1,2,3,4,5,6,7],'10:00'),(2,1,current_date+1,array[1,2,3,4,5,6,7],'23:00')");
  const run=async()=>(await db.query('select st_run_recurring(3) r')).rows[0].r;
  assert.equal((await run()).failed,1);assert.equal((await run()).processed,1);
