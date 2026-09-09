@@ -38,14 +38,14 @@ try {
  await Promise.all(independent.map(j=>db.query("select st_job_command($1,$2,'accept','{}',$3)",[j.actor_id,j.job_id,crypto.randomUUID()])));
  const independentMs=Math.round(performance.now()-independentStart);
  assert.equal((await db.query("select count(*)::int n from st_jobs j join st_objects o on o.id=j.object_id where o.code like 'LOAD-%' and j.status='ACCEPTED'")).rows[0].n,50);
- const batchJobs=(await db.query("insert into st_jobs(object_id,client_id,service_date,status,assigned_cleaner_id,client_price,payout) values(1,1,current_date+10,'COMPLETED',1,40,20),(2,1,current_date+10,'COMPLETED',1,40,20) returning id,to_char(service_date,'YYYY-MM') month")).rows;
+ const batchJobs=(await db.query("insert into st_jobs(object_id,client_id,service_date,status,assigned_cleaner_id,client_price,payout) values(1,1,current_date+10,'COMPLETED',1,40,20),(2,1,current_date+10,'COMPLETED',1,40,20) returning id,to_char(service_date,'YYYY-MM') as period")).rows;
  const batchItems=JSON.stringify(batchJobs.map(j=>({jobId:Number(j.id),amountCents:2000}))),batchKey=crypto.randomUUID();
- const batchCall=key=>db.query("select st_settle_batch(1,$1,'CLEANER',1,$2::jsonb,'', $3) r",[batchJobs[0].month,batchItems,key]);
+ const batchCall=key=>db.query("select st_settle_batch(1,$1,'CLEANER',1,$2::jsonb,'', $3) r",[batchJobs[0].period,batchItems,key]);
  const batchResults=await Promise.allSettled(Array.from({length:20},()=>batchCall(crypto.randomUUID())));
  assert.equal(batchResults.filter(r=>r.status==='fulfilled').length,1);
  for(const r of batchResults.filter(r=>r.status==='rejected'))assert.match(r.reason.message,/balance/i);
  const clientItems=JSON.stringify(batchJobs.map(j=>({jobId:Number(j.id),amountCents:4000})));
- const repeated=await Promise.all(Array.from({length:20},()=>db.query("select st_settle_batch(1,$1,'CLIENT',1,$2::jsonb,'',$3) r",[batchJobs[0].month,clientItems,batchKey])));
+ const repeated=await Promise.all(Array.from({length:20},()=>db.query("select st_settle_batch(1,$1,'CLIENT',1,$2::jsonb,'',$3) r",[batchJobs[0].period,clientItems,batchKey])));
  assert.ok(repeated.every(r=>r.rows[0].r.amountCents===8000));
  assert.equal((await db.query('select count(*)::int n from st_settlements where job_id=any($1)',[batchJobs.map(j=>j.id)])).rows[0].n,4);
  const report={engine:'Native PostgreSQL',simultaneousRequests:50,claimWinners:1,duplicateCompletions:50,completionEvents:1,contentionMs,independentJobs:50,independentMs,overlappingBatches:20,batchWinners:1,replayedBatches:20};

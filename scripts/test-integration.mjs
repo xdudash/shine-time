@@ -105,8 +105,8 @@ try{
  await api(0,'admin/cleaners/2','PATCH',{active:false});
  await assert.rejects(api(2,'me'),/403|not activated/i);
  // Monthly UI contracts use real Auth, REST RPC and isolated database records.
- const bulkRows=(await db.query("insert into st_jobs(object_id,client_id,service_date,status,assigned_cleaner_id,client_price,payout) values(1,1,date_trunc('month',current_date)::date+20,'COMPLETED',1,40,20),(1,1,date_trunc('month',current_date)::date+21,'COMPLETED',1,40,20) returning id,to_char(service_date,'YYYY-MM') month")).rows;
- const bulkMonth=bulkRows[0].month;
+ const bulkRows=(await db.query("insert into st_jobs(object_id,client_id,service_date,status,assigned_cleaner_id,client_price,payout) values(1,1,date_trunc('month',current_date)::date+20,'COMPLETED',1,40,20),(1,1,date_trunc('month',current_date)::date+21,'COMPLETED',1,40,20) returning id,to_char(service_date,'YYYY-MM') as period")).rows;
+ const bulkMonth=bulkRows[0].period;
  const monthly=await api(0,'admin/settlements/monthly','GET',{}, {month:bulkMonth,side:'CLEANER',partyId:1});
  assert.ok(monthly.groups.some(g=>g.id===1&&g.dueCents>=4000));
  const bulkBody={month:bulkMonth,side:'CLEANER',partyId:1,items:bulkRows.map(j=>({jobId:Number(j.id),amountCents:2000})),note:'',requestId:crypto.randomUUID()};
