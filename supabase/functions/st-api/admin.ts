@@ -126,6 +126,8 @@ export function createAdmin(deps: any) {
                     map.lng = coordinates.lng;
                 }
                 const updates = Object.fromEntries(Object.entries(map).filter(([, value]) => value !== undefined));
+                if (!Object.keys(updates).length)
+                    return { object: await one(service.from('st_objects').select('*').eq('id', id).single()) };
                 return { object: await one(service.from('st_objects').update(updates).eq('id', id).select().single()) };
             }
             if (method === 'DELETE') {
@@ -261,7 +263,10 @@ export function createAdmin(deps: any) {
                     await updateManagedLoginEmail(user, body.email);
                 await result(service.from('st_users').update({ full_name: body.fullName ?? user.full_name, phone: body.phone ?? user.phone, language: body.language ? validLanguage(body.language) : user.language, active: body.active ?? user.active }).eq('id', user.id));
                 const updates: AnyRow = { account_type: body.accountType === 'MANAGER' ? 'PROPERTY_MANAGER' : body.accountType, company_name: body.companyName, billing_name: body.billingName, ico: body.ico, dic: body.dic, ic_dph: body.icDph, billing_address: body.billingAddress, notes: body.notes };
-                return { client: await one(service.from('st_client_accounts').update(Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined))).eq('id', clientId).select().single()) };
+                const accountUpdates = Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined));
+                if (!Object.keys(accountUpdates).length)
+                    return { client };
+                return { client: await one(service.from('st_client_accounts').update(accountUpdates).eq('id', clientId).select().single()) };
             }
         }
         if (route === 'admin/finance' && method === 'GET') {
