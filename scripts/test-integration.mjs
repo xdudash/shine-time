@@ -104,6 +104,17 @@ try{
  assert.equal(cancelled.job.status,'CANCELLED');
  await api(0,'admin/cleaners/2','PATCH',{active:false});
  await assert.rejects(api(2,'me'),/403|not activated/i);
- const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false,v6ManagerAssignment:true,v6OperatorCancellation:true,v6CleanerIdentity:true};
+ // Monthly UI contracts use real Auth, REST RPC and isolated database records.
+ const bulkRows=(await db.query("insert into st_jobs(object_id,client_id,service_date,status,assigned_cleaner_id,client_price,payout) values(1,1,date_trunc('month',current_date)::date+20,'COMPLETED',1,40,20),(1,1,date_trunc('month',current_date)::date+21,'COMPLETED',1,40,20) returning id,to_char(service_date,'YYYY-MM') month")).rows;
+ const bulkMonth=bulkRows[0].month;
+ const monthly=await api(0,'admin/settlements/monthly','GET',{}, {month:bulkMonth,side:'CLEANER',partyId:1});
+ assert.ok(monthly.groups.some(g=>g.id===1&&g.dueCents>=4000));
+ const bulkBody={month:bulkMonth,side:'CLEANER',partyId:1,items:bulkRows.map(j=>({jobId:Number(j.id),amountCents:2000})),note:'',requestId:crypto.randomUUID()};
+ await assert.rejects(api(1,'admin/settlements/monthly','GET',{}, {month:bulkMonth,side:'CLIENT'}),/403|Forbidden/i);
+ await assert.rejects(api(5,'admin/settlements/batch','POST',bulkBody),/403|Forbidden/i);
+ const bulkResult=await api(0,'admin/settlements/batch','POST',bulkBody);
+ assert.equal(bulkResult.amountCents,4000);assert.equal(bulkResult.count,2);
+ assert.deepEqual(await api(0,'admin/settlements/batch','POST',bulkBody),bulkResult);
+ const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false,v6ManagerAssignment:true,v6OperatorCancellation:true,v6CleanerIdentity:true,monthlyBulkSettlement:true};
  await writeFile('artifacts/integration-result.json',JSON.stringify(report,null,2));console.log(report);
 }finally{for(const stop of channels)await stop();await db.end();for(const client of clients)await client.auth.signOut();}
