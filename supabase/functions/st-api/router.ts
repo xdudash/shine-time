@@ -1,3 +1,4 @@
+import { propertyPhotosRoute } from './property-photos.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2.112.4';
 import { activeAssignmentStatuses, availableBookingSlots, cleanerEarningsSummary, clientAccountRows, coordinatesForStorage, financeBoardReport, marketplaceForCleaner, riskForJob, roleCapabilities, settingsFromRows } from './logic.mjs';
 import { marketplaceJobs, projectResponse } from './security.mjs';
@@ -35,6 +36,9 @@ export function createHandler(deps: any) {
                 await result(service.from('st_notifications').update({ read_at: new Date().toISOString() }).eq('user_id', ctx.appUser.id).is('read_at', null));
                 return json({ ok: true });
             }
+            const propertyPhotos = await propertyPhotosRoute({ctx,route,method,body,service,result,ApiError,jobFor,clientObject});
+            if (propertyPhotos !== null)
+                return new Response(JSON.stringify(propertyPhotos), {headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
             const extended = await operationsRoute({ ctx, route, method, query, body, service, result, ApiError, today });
             if (extended !== null)
                 return json(extended);

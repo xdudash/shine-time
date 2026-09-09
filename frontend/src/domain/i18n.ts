@@ -1583,3 +1583,11 @@ Object.assign(dictionaries.en, {
 });
 export function translate(lang: Language, key: string) { return (dictionaries[lang] as Record<string, string>)[key] ?? key; }
 export const languages = { ru: 'Русский', sk: 'Slovenčina', uk: 'Українська', en: 'English' };
+
+Object.assign(dictionaries.ru,{"Property photos": "Фото объекта", "Private property guide": "Вход, ключи и порядок работы. Клинер видит фото только во время принятой уборки.", "No property photos": "Фото пока не добавлены", "Choose property photo": "Выбрать фото", "Photo caption": "Подпись: как войти или что сделать", "Photo limit 5 MB": "Фото должно быть не больше 5 МБ", "Cannot read photo": "Не удалось прочитать фото", "Open photo": "Открыть фото", "Delete photo?": "Удалить фото?"});
+
+Object.assign(dictionaries.sk,{"Property photos": "Fotografie objektu", "Private property guide": "Vstup, kľúče a postup práce. Fotografie sú upratovačovi dostupné iba počas prijatého upratovania.", "No property photos": "Zatiaľ žiadne fotografie", "Choose property photo": "Vybrať fotografiu", "Photo caption": "Popis: ako vstúpiť alebo čo urobiť", "Photo limit 5 MB": "Fotografia môže mať najviac 5 MB", "Cannot read photo": "Fotografiu sa nepodarilo načítať", "Open photo": "Otvoriť fotografiu", "Delete photo?": "Odstrániť fotografiu?"});
+
+Object.assign(dictionaries.uk,{"Property photos": "Фото об’єкта", "Private property guide": "Вхід, ключі та порядок роботи. Клінер бачить фото лише під час прийнятого прибирання.", "No property photos": "Фото ще не додано", "Choose property photo": "Вибрати фото", "Photo caption": "Підпис: як увійти або що зробити", "Photo limit 5 MB": "Фото має бути не більше 5 МБ", "Cannot read photo": "Не вдалося прочитати фото", "Open photo": "Відкрити фото", "Delete photo?": "Видалити фото?"});
+
+Object.assign(dictionaries.en,{"Property photos": "Property photos", "Private property guide": "Entrance, keys and work instructions. Cleaners can view photos only during an accepted cleaning.", "No property photos": "No photos added yet", "Choose property photo": "Choose photo", "Photo caption": "Caption: how to enter or what to do", "Photo limit 5 MB": "Photo must be at most 5 MB", "Cannot read photo": "Cannot read photo", "Open photo": "Open photo", "Delete photo?": "Delete photo?"});
