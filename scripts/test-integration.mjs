@@ -84,6 +84,26 @@ try{
  const settlement=await api(0,'admin/settlements','GET',{}, {month:date.slice(0,7)});
  assert.equal(settlement.summary.dueCents,0);assert.equal(settlement.summary.payableCents,0);
  await assert.rejects(api(3,'admin/settings'),/403|Forbidden|permission/i);
- const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false};
+ // v6 route contracts: manager assignments, cleaner IDs and operator cancellation.
+ const team=await api(0,'admin/cleaners');
+ assert.deepEqual(team.cleaners.map(c=>c.id).sort(),[1,2]);
+ await assert.rejects(api(5,'admin/clients/2/properties','POST',{objectId:1}),/403|Forbidden/i);
+ await api(0,'admin/clients/2/properties','POST',{objectId:1});
+ await api(0,'admin/clients/2/properties','POST',{objectId:1});
+ assert.deepEqual((await api(0,'admin/clients/2/properties')).objectIds,[1]);
+ assert.equal((await api(4,'client/objects')).objects.length,1);
+ await api(0,'admin/clients/2/properties/1','DELETE');
+ assert.equal((await api(4,'client/objects')).objects.length,0);
+ await api(3,'client/objects/1','PATCH',{serviceCategory:'OFFICE'});
+ const changed=(await api(3,'client/objects')).objects[0];
+ assert.equal(changed.service_category,'OFFICE');assert.equal(changed.approval_status,'PENDING');
+ await api(0,'admin/objects/1','PATCH',{active:true,approvalStatus:'APPROVED'});
+ const nextDate=(await db.query("select to_char(current_date+2,'YYYY-MM-DD') date")).rows[0].date;
+ const created=await api(0,'admin/jobs','POST',{objectId:1,serviceDate:nextDate,plannedStart:'10:00'});
+ const cancelled=await api(5,`admin/jobs/${created.job.id}/cancel`,'POST',{requestId:crypto.randomUUID()});
+ assert.equal(cancelled.job.status,'CANCELLED');
+ await api(0,'admin/cleaners/2','PATCH',{active:false});
+ await assert.rejects(api(2,'me'),/403|not activated/i);
+ const report={realAuthRoles:5,booking:true,signedStorageUpload:true,idempotentFinalize:true,completion:true,settlements:true,realtime:true,privateJobAccess:true,productionTouched:false,v6ManagerAssignment:true,v6OperatorCancellation:true,v6CleanerIdentity:true};
  await writeFile('artifacts/integration-result.json',JSON.stringify(report,null,2));console.log(report);
 }finally{for(const stop of channels)await stop();await db.end();for(const client of clients)await client.auth.signOut();}

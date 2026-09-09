@@ -1,10 +1,124 @@
-export type Role='ADMIN'|'OPERATIONS_MANAGER'|'CLEANER'|'OWNER'|'PROPERTY_MANAGER';
-export type Language='ru'|'sk'|'uk'|'en';
-export interface User{id:number;full_name:string;email:string;role:Role;language:Language;phone:string}
-export interface Job{id:number;object_id:number;object_name:string;object_code:string;address:string;service_date:string;earliest_start:string;planned_start:string;deadline:string;duration_minutes:number;status:string;assigned_cleaner_id:number|null;cleaner_name?:string;payout?:number;bonus?:number;client_price?:number;risk_level?:string;access_instructions?:string;key_instructions?:string;parking?:string;linen_location?:string;supplies_location?:string;object_notes?:string;lat?:number;lng?:number;checklist?:CheckItem[];photos?:Photo[];issues?:Issue[];events?:{id:number;event_type:string;actor_name:string;created_at:string}[]}
-export interface CheckItem{id:number;label:string;completed:boolean;required:boolean;photo_required:boolean;photo_category?:string}
-export interface Photo{id:number;url:string;category:string;mime?:string}
-export interface Property{id:number;code:string;name:string;address:string;zone:string;client_id?:number;service_category:string;bedrooms:number;bathrooms:number;checkout_time:string;deadline_time:string;duration_minutes:number;payout?:number;client_price?:number;active:boolean;approval_status:string;access_instructions?:string;key_instructions?:string;parking?:string;linen_location?:string;supplies_location?:string;notes?:string;lat?:number;lng?:number}
-export interface Person{id:number;full_name:string;email:string;phone:string;active:boolean;mode?:string;transport?:string;company_name?:string;billing_name?:string;billing_address?:string;account_type?:string;max_jobs_day?:number}
-export interface Issue{id:number;job_id:number;type:string;description:string;priority:string;status:string;object_code?:string;address?:string;resolution_note?:string}
-export interface Schedule{id:number;object_id:number;start_date:string;end_date?:string;planned_start:string;weekdays:number[];active:boolean;st_objects?:{name:string;code:string}}
+export type Role = 'ADMIN' | 'OPERATIONS_MANAGER' | 'CLEANER' | 'OWNER' | 'PROPERTY_MANAGER';
+export type Language = 'ru' | 'sk' | 'uk' | 'en';
+export interface User {
+    id: number;
+    full_name: string;
+    email: string;
+    role: Role;
+    language: Language;
+    phone: string;
+}
+export interface Job {
+    id: number;
+    object_id: number;
+    object_name: string;
+    object_code: string;
+    address: string;
+    service_date: string;
+    earliest_start: string;
+    planned_start: string;
+    deadline: string;
+    duration_minutes: number;
+    status: string;
+    assigned_cleaner_id: number | null;
+    cleaner_name?: string;
+    payout?: number;
+    bonus?: number;
+    client_price?: number;
+    risk_level?: string;
+    access_instructions?: string;
+    key_instructions?: string;
+    parking?: string;
+    linen_location?: string;
+    supplies_location?: string;
+    object_notes?: string;
+    lat?: number;
+    lng?: number;
+    checklist?: CheckItem[];
+    photos?: Photo[];
+    issues?: Issue[];
+    events?: {
+        id: number;
+        event_type: string;
+        actor_name: string;
+        created_at: string;
+    }[];
+}
+export interface CheckItem {
+    id: number;
+    label: string;
+    completed: boolean;
+    required: boolean;
+    photo_required: boolean;
+    photo_category?: string;
+}
+export interface Photo {
+    id: number;
+    url: string;
+    category: string;
+    mime?: string;
+}
+export interface Property {
+    id: number;
+    code: string;
+    name: string;
+    address: string;
+    zone: string;
+    client_id?: number;
+    service_category: string;
+    bedrooms: number;
+    bathrooms: number;
+    checkout_time: string;
+    deadline_time: string;
+    duration_minutes: number;
+    payout?: number;
+    client_price?: number;
+    active: boolean;
+    approval_status: string;
+    access_instructions?: string;
+    key_instructions?: string;
+    parking?: string;
+    linen_location?: string;
+    supplies_location?: string;
+    notes?: string;
+    lat?: number;
+    lng?: number;
+}
+export interface Person {
+    id: number;
+    full_name: string;
+    email: string;
+    phone: string;
+    active: boolean;
+    mode?: string;
+    transport?: string;
+    company_name?: string;
+    billing_name?: string;
+    billing_address?: string;
+    account_type?: string;
+    max_jobs_day?: number;
+}
+export interface Issue {
+    id: number;
+    job_id: number;
+    type: string;
+    description: string;
+    priority: string;
+    status: string;
+    object_code?: string;
+    address?: string;
+    resolution_note?: string;
+}
+export interface Schedule {
+    id: number;
+    object_id: number;
+    start_date: string;
+    end_date?: string;
+    planned_start: string;
+    weekdays: number[];
+    active: boolean;
+    st_objects?: {
+        name: string;
+        code: string;
+    };
+}
