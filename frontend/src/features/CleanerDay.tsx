@@ -15,7 +15,7 @@ export function CleanerDay(){
  });
  const done=jobs.filter(j=>j.status==='COMPLETED'),next=active[0];
  const earning=done.reduce((n,j)=>n+Number(j.payout||0)+Number(j.bonus||0),0);
- const step=(j:Job)=>j.status==='CLEANING'?'Continue cleaning':j.status==='ARRIVED'?'Start cleaning':j.status==='EN_ROUTE'?'I have arrived':'Open cleaning';
+ const step=(j:Job)=>j.status==='CLEANING'?'Continue cleaning':'Open cleaning';
  return <div className="cleaner-day"><Header title="My day"><input type="date" aria-label={t('Date')} value={date} onChange={e=>setDate(e.target.value||serviceToday())}/></Header>
  <div className="day-switch"><Button onClick={()=>setDate(serviceToday())}>{t('Today')}</Button><a className="button" href="#marketplace">{t('Find more jobs')}</a><a className="button" href="#finance">{t('My monthly earnings')}</a></div>
  <QueryState {...q} retry={q.reload}>
