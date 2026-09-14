@@ -47,6 +47,7 @@ $publicConfig = [
   <script src="assets/operations-validation.js"></script>
   <script src="assets/monitoring-extension.js"></script>
   <script src="assets/export.js"></script>
+  <script src="assets/operations-automation.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
