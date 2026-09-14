@@ -60,7 +60,8 @@ jobs:
             <div id="toast-root"></div>
             <script>
               window.ST_BASE = './';
-              window.ST_BUILD = 'github-pages-preview';
+              window.ST_PREVIEW = true;
+              window.ST_BUILD = '2026-09-07-scale1';
               window.ST_SUPABASE = {
                 url: 'https://qbbtroiqioufuucrqair.supabase.co',
                 publishableKey: 'sb_publishable_orOkvZF6ppJH8ObXcgfSMw_D4l8lrKs',
