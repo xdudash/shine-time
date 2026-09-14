@@ -18,6 +18,8 @@ export function projectResponse(value,role){
   const hidden=new Set(role==='CLEANER'?['client_price','object_client_price','extra_revenue','extra_cost','client_company','client_name','client_id','financial_status']:
     role==='OPERATIONS_MANAGER'?['client_price','object_client_price','extra_revenue','extra_cost','financial_status']:
     ['payout','bonus','extra_cost','object_notes','cleaner_reliability']);
-  const visit=item=>Array.isArray(item)?item.map(visit):item&&typeof item==='object'?Object.fromEntries(Object.entries(item).filter(([key])=>!hidden.has(key)).map(([key,value])=>[key,visit(value)])):item;
+  const privateGuide=new Set(['access_instructions','key_instructions','parking','linen_location','supplies_location','wifi','object_notes']);
+  const activeGuide=new Set(['ACCEPTED','EN_ROUTE','ARRIVED','CLEANING']);
+  const visit=item=>Array.isArray(item)?item.map(visit):item&&typeof item==='object'?Object.fromEntries(Object.entries(item).filter(([key])=>!hidden.has(key)&&!(role==='CLEANER'&&item.object_id!==undefined&&!activeGuide.has(item.status)&&privateGuide.has(key))).map(([key,value])=>[key,visit(value)])):item;
   return visit(value);
 }

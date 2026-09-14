@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore, useState, useCallback, useRef } from 'react';
-import { api } from './client';
+import { api, ApiError } from './client';
 type Entry = {
     data?: unknown;
     error?: Error;
@@ -16,7 +16,7 @@ export function useQuery<T>(route: string | null, query?: Record<string, string 
     return Promise.resolve(); if (flights.has(key))
     return flights.get(key)!; const epoch = generation, version = cache.get(key)?.version || 0; cache.set(key, { ...cache.get(key), loading: true, error: undefined, version }); emit(); const promise = api<T>(route, { query }).then(data => { if (epoch === generation)
     cache.set(key, { data, loading: false, version: cache.get(key)?.version || 0 }); }).catch(error => { if (epoch === generation)
-    cache.set(key, { ...cache.get(key), loading: false, error, version: cache.get(key)?.version || 0 }); }).finally(() => { if (flights.get(key) === promise) {
+    cache.set(key, { ...cache.get(key), data: error instanceof ApiError && [401,403,404].includes(error.status) ? undefined : cache.get(key)?.data, loading: false, error, version: cache.get(key)?.version || 0 }); }).finally(() => { if (flights.get(key) === promise) {
     flights.delete(key);
     emit();
     if (epoch === generation && (cache.get(key)?.version || 0) > version)

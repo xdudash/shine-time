@@ -37,9 +37,10 @@ function Batch({month,side,party,onDone}:{month:string;side:string;party:Group;o
   <label className="batch-check"><input type="checkbox" checked={all} disabled={!eligible.length} onChange={()=>setSelected(all?new Map():new Map(eligible.map(j=>[j.id,j.dueCents])))}/>{t('Select all unpaid')} ({eligible.length})</label>
   <div className="batch-jobs">{rows.map(j=><label className="batch-job" key={j.id}><input type="checkbox" checked={selected.has(j.id)} disabled={j.dueCents<=0} onChange={()=>toggle(j)}/><span><strong>{j.object_name}</strong><small>{j.service_date} · #{j.id}</small></span><strong>{money(j.dueCents/100)}</strong></label>)}</div>
   <div className="batch-total"><span>{t('Selected')}: {selected.size}</span><strong>{money(total/100)}</strong></div>
-  {selected.size>0&&<Form fields={[{name:'note',label:'Payment note optional',type:'textarea',wide:true}]} submit={side==='CLIENT'?'Record client receipt':'Record cleaner payment'} onSubmit={async v=>{
+  {<Form fields={[{name:'note',label:'Payment note optional',type:'textarea',wide:true}]} submit={side==='CLIENT'?'Record client receipt':'Record cleaner payment'} onSubmit={async v=>{
+   if(!selected.size)throw new Error(t('Select cleanings'));
    try{const result=await api<{count:number;amountCents:number}>('admin/settlements/batch',{method:'POST',body:{month,side,partyId:party.id,items:[...selected].map(([jobId,amountCents])=>({jobId,amountCents})),note:v.note}});onDone(result)}
-   catch(e){if(e instanceof Error&&e.message.includes('Balance changed'))throw new Error(t('Balance changed help'));throw e}
+   catch(e){if(e instanceof Error&&e.message.includes('Balance changed')){setSelected(new Map());await q.reload();throw new Error(t('Balance changed help'));}throw e}
   }}/> }
  </QueryState></div>;
 }
