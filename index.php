@@ -76,6 +76,7 @@ $publicConfig = [
   <script src="assets/activity-log.js"></script>
   <script src="assets/pwa-actions.js"></script>
   <script src="assets/operations-command-surface.js"></script>
+  <script src="assets/dispatch-console.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
