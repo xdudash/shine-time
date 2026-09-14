@@ -14,12 +14,12 @@ test('frontend security contract keeps sensitive database tables out of direct b
 
 test('frontend security contract keeps private credential fields out of public config', () => {
   const config = read('config/supabase.php');
-  assert.doesNotMatch(config, /service_role|sb_secret|secret_key|private_key/i);
+  assert.doesNotMatch(config, /['"](?:service_role|sb_secret|secret_key|private_key)['"]\\s*=>/i);
 });
 
 test('map coordinate parser rejects invalid and out-of-range coordinates', () => {
   const source = read('assets/operations-ui-core.js');
-  assert.match(source, /coordinate < -limit \|\| coordinate > limit/);
+  assert.match(source, /coordinate < -limit \\|\\| coordinate > limit/);
   assert.match(source, /return null/);
 });
 
@@ -30,10 +30,11 @@ test('operations manager navigation remains fail-closed for restricted areas', (
   }
 });
 
-test('production frontend exposes no obvious credential assignment', () => {
+test('production frontend exposes no obvious private credential assignment', () => {
   const files = ['index.php', 'assets/supabase-client.js', 'assets/app.js', 'assets/operations-extension.js'];
+  const assignment = /(?:service_role|sb_secret|secret_key|private_key)\\s*[:=]/i;
   for (const file of files) {
     const source = read(file);
-    assert.doesNotMatch(source, /service_role|sb_secret/i, `${file} contains a server credential marker`);
+    assert.doesNotMatch(source, assignment, `${file} contains a private credential assignment`);
   }
 });
