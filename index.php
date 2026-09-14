@@ -79,6 +79,7 @@ $publicConfig = [
   <script src="assets/operations-command-surface.js"></script>
   <script src="assets/dispatch-console.js"></script>
   <script src="assets/job-lifecycle-console.js"></script>
+  <script src="assets/cleaner-gps-enforcement.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
