@@ -12,7 +12,7 @@ test('cleaner lifecycle uses protected cleaner endpoints and proof gates', () =>
     '/api/cleaner/jobs/${id}/checklist/${itemId}',
     '/api/cleaner/jobs/${id}/issues',
     '/api/cleaner/jobs/${id}/complete',
-  ]) assert.match(source, new RegExp(endpoint.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')));
+  ]) assert.ok(source.includes(endpoint), `missing cleaner endpoint contract: ${endpoint}`);
   assert.match(source, /completeReady=done===required&&requiredCats\.every\(x=>photoCats\.has\(x\)\)/);
   assert.match(source, /navigator\.geolocation\.getCurrentPosition/);
   assert.match(source, /lat:pos\.coords\.latitude,lng:pos\.coords\.longitude/);
