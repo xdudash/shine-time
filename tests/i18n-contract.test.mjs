@@ -8,9 +8,10 @@ function localeKeys(locale){
   const marker=`${locale}: {`;
   const start=source.indexOf(marker);
   assert.notEqual(start,-1,`missing locale ${locale}`);
-  const next=source.indexOf('\n    },',start);
-  assert.notEqual(next,-1,`unterminated locale ${locale}`);
-  return [...source.slice(start,next).matchAll(/'((?:[^'\\]|\\.)+)'\s*:/g)].map(m=>m[1]);
+  const nextLocale=source.slice(start+marker.length).match(/\n\s{4}(?:ru|sk|uk|en): \{/);
+  const end=nextLocale ? start+marker.length+nextLocale.index : source.indexOf('\n  };',start);
+  assert.notEqual(end,-1,`unterminated locale ${locale}`);
+  return [...source.slice(start,end).matchAll(/'((?:[^'\\]|\\.)+)'\s*:/g)].map(m=>m[1]);
 }
 
 test('all supported locales contain the core navigation and auth vocabulary',()=>{
