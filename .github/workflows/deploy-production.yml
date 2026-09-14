@@ -66,8 +66,7 @@ jobs:
 
   deploy-hostinger:
     name: Deploy Hostinger frontend
-    needs: [verify, deploy-supabase]
-    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    needs: verify
     runs-on: ubuntu-latest
     environment: production
     steps:
