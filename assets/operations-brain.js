@@ -15,7 +15,7 @@
    const risk=best?.prediction?.lateRisk??100;
    const action=!current?'ASSIGN':best&&best.cleanerId!==current&&gain>=Math.max(10,num(options.minGainMinutes||15))?'REASSIGN':risk>=70?'RESCUE':'KEEP';
    return{job,currentCleanerId:current||null,recommended:best,recommendation:action,timeGainMinutes:gain,risk,confidence:best?.prediction?.confidence??0,reason:action==='REASSIGN'?'FASTER_PERFORMER':action==='RESCUE'?'LATE_RISK':action==='ASSIGN'?'UNASSIGNED':'STABLE'};
-  }).sort((a,b)=>({RESCUE:0,REASSIGN:1,ASSIGN:2,KEEP:3}[a.recommendation]-({RESCUE:0,REASSIGN:1,ASSIGN:2,KEEP:3}[b.recommendation])||b.risk-a.risk||b.timeGainMinutes-a.timeGainMinutes);
+  }).sort((a,b)=>({RESCUE:0,REASSIGN:1,ASSIGN:2,KEEP:3}[a.recommendation]-({RESCUE:0,REASSIGN:1,ASSIGN:2,KEEP:3}[b.recommendation])||b.risk-a.risk||b.timeGainMinutes-a.timeGainMinutes));
   return{rows,profiles:buildProfiles(cleaners,historyJobs,options),summary:{jobs:rows.length,assignments:rows.filter(x=>x.recommendation==='ASSIGN').length,reassignments:rows.filter(x=>x.recommendation==='REASSIGN').length,rescues:rows.filter(x=>x.recommendation==='RESCUE').length,keep:rows.filter(x=>x.recommendation==='KEEP').length}};
  };
  const forecast=(jobs=[],cleaners=[],historyJobs=jobs,options={})=>jobs.map(job=>{const current=id(job.cleanerId||job.cleaner_id),c=cleaners.find(x=>id(x.id||x.user_id)===current),p=c?predict(c,job,historyJobs,options):null;return{job,cleanerId:current||null,prediction:p}});
