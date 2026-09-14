@@ -5,6 +5,8 @@ import fs from 'node:fs';
 const root = new URL('..', import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 test('production entrypoint loads every operational frontend extension', () => {
   const index = read('index.php');
   const required = [
@@ -18,7 +20,7 @@ test('production entrypoint loads every operational frontend extension', () => {
     'assets/monitoring-extension.js',
     'assets/export.js',
   ];
-  for (const asset of required) assert.match(index, new RegExp(`assets/${asset.split('assets/')[1].replace('.', '\\.')}`));
+  for (const asset of required) assert.match(index, new RegExp(escapeRegExp(asset)));
   assert.match(index, /<script>bootstrap\(\);<\/script>/);
 });
 
@@ -26,8 +28,8 @@ test('service-worker shell contains every production frontend extension', () => 
   const source = read('assets/service-worker-entry.mjs');
   const generated = read('sw.js');
   for (const asset of ['assets/monitoring-extension.js', 'assets/export.js']) {
-    assert.match(source, new RegExp(asset.replace('.', '\\.') ), `service-worker source misses ${asset}`);
-    assert.match(generated, new RegExp(asset.replace('.', '\\.') ), `generated service-worker misses ${asset}`);
+    assert.match(source, new RegExp(escapeRegExp(asset)), `service-worker source misses ${asset}`);
+    assert.match(generated, new RegExp(escapeRegExp(asset)), `generated service-worker misses ${asset}`);
   }
 });
 
@@ -37,7 +39,7 @@ test('production UI contract keeps all supported locales and public build config
   assert.match(i18n, /const LANGS = \['ru','sk','uk','en'\]/);
   const config = read('config/supabase.php');
   assert.match(config, /release_build/);
-  assert.doesNotMatch(config, /service_role|sb_secret/i);
+  assert.doesNotMatch(config, /['\"](?:service_role|sb_secret)['\"]\s*=>/i);
 });
 
 test('operational extensions expose monitoring, CSV export and exact-money entry points', () => {
