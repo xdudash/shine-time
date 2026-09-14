@@ -67,6 +67,7 @@ jobs:
   deploy-hostinger:
     name: Deploy Hostinger frontend
     needs: verify
+    if: ${{ success() }}
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -91,10 +92,8 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH }}
         run: |
-          scp -P "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 artifacts/shine-time-frontend.zip \
-            "$HOSTINGER_USER@$HOSTINGER_HOST:/tmp/shine-time-frontend-${GITHUB_SHA}.zip"
-          ssh -p "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "command -v unzip >/dev/null && mkdir -p '$HOSTINGER_PATH/.releases' && unzip -q -o /tmp/shine-time-frontend-${GITHUB_SHA}.zip -d '$HOSTINGER_PATH/.releases/${GITHUB_SHA}'"
+          scp -P "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 artifacts/shine-time-frontend.zip "$HOSTINGER_USER@$HOSTINGER_HOST:/tmp/shine-time-frontend-${GITHUB_SHA}.zip"
+          ssh -p "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" "command -v unzip >/dev/null && mkdir -p '$HOSTINGER_PATH/.releases' && unzip -q -o /tmp/shine-time-frontend-${GITHUB_SHA}.zip -d '$HOSTINGER_PATH/.releases/${GITHUB_SHA}'"
       - name: Activate frontend release
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
@@ -102,7 +101,6 @@ jobs:
           HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
           HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH }}
         run: |
-          ssh -p "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "test -f '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/index.php' && cp -a '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/.' '$HOSTINGER_PATH/' && rm -f /tmp/shine-time-frontend-${GITHUB_SHA}.zip"
+          ssh -p "$HOSTINGER_PORT" -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" "test -f '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/index.php' && cp -a '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/.' '$HOSTINGER_PATH/' && rm -f /tmp/shine-time-frontend-${GITHUB_SHA}.zip"
       - name: Smoke check package
         run: test -s artifacts/frontend-checksums.json
