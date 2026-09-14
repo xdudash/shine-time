@@ -1,0 +1,103 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_REF }}
+  HOSTINGER_DEPLOY_ENABLED: ${{ secrets.PRODUCTION_DEPLOY_ENABLED }}
+
+jobs:
+  verify:
+    name: Verify release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: python scripts/package-frontend.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-frontend
+          path: |
+            artifacts/shine-time-frontend.zip
+            artifacts/frontend-checksums.json
+
+  deploy-supabase:
+    name: Deploy Supabase
+    needs: verify
+    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' || secrets.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v2
+        with:
+          version: latest
+      - name: Push database migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --project-ref "$SUPABASE_PROJECT_ID"
+      - name: Deploy st-api
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy st-api --use-api --project-ref "$SUPABASE_PROJECT_ID"
+
+  deploy-hostinger:
+    name: Deploy Hostinger frontend
+    needs: [verify, deploy-supabase]
+    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' || secrets.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: hostinger-frontend
+          path: artifacts
+      - name: Install SSH key
+        env:
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          HOSTINGER_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$HOSTINGER_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+      - name: Upload release package
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH }}
+        run: |
+          scp -i ~/.ssh/id_ed25519 artifacts/shine-time-frontend.zip \
+            "$HOSTINGER_USER@$HOSTINGER_HOST:/tmp/shine-time-frontend-${GITHUB_SHA}.zip"
+          ssh -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "mkdir -p '$HOSTINGER_PATH/.releases' && unzip -q -o /tmp/shine-time-frontend-${GITHUB_SHA}.zip -d '$HOSTINGER_PATH/.releases/${GITHUB_SHA}'"
+      - name: Atomic frontend switch
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "test -f '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/index.php' && cp -a '$HOSTINGER_PATH/.releases/${GITHUB_SHA}/.' '$HOSTINGER_PATH/' && rm -f /tmp/shine-time-frontend-${GITHUB_SHA}.zip"
+      - name: Smoke check package
+        run: test -s artifacts/frontend-checksums.json
