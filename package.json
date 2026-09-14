@@ -1,1 +1,32 @@
-{"name":"shine-time-operations","version":"5.0.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","build":"node scripts/build.mjs","check":"node --check assets/app.js"},"devDependencies":{"@electric-sql/pglite":"0.5.8","@php-wasm/cli":"3.1.52","@sparticuz/chromium":"149.0.0","@types/node":"24.10.1","esbuild":"0.25.12","pg":"8.16.3","supabase":"2.116.0","typescript":"5.9.3"},"dependencies":{"@supabase/supabase-js":"2.112.4"}}
+{
+  "name": "shine-time-operations",
+  "version": "5.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check assets/app.js",
+    "build:v6": "node scripts/build-v6.mjs",
+    "typecheck": "tsc -p frontend/tsconfig.json",
+    "dev": "vite --config frontend/vite.config.mjs --mode qa"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@php-wasm/cli": "3.1.52",
+    "@sparticuz/chromium": "149.0.0",
+    "@types/node": "24.10.1",
+    "esbuild": "0.25.12",
+    "pg": "8.16.3",
+    "supabase": "2.116.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.4",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "vite": "7.3.1"
+  }
+}

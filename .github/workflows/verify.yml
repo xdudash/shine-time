@@ -26,6 +26,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - run: npm run typecheck
+      - run: npm run build:v6
+      - run: python scripts/package-v6.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-v6
+          path: |
+            artifacts/Shine_Time_v6_app.zip
+            artifacts/v6-checksums.json
       - run: npm run build
       - run: python scripts/package-frontend.py
       - uses: actions/upload-artifact@v4

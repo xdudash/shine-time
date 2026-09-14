@@ -1,0 +1,35 @@
+import { useState, type FormEvent } from 'react';
+import { supabase } from '../api/client';
+import { useApp } from '../app/context';
+import { Button, Icon } from '../ui/components';
+import { languages } from '../domain/i18n';
+import type { Language } from '../domain/models';
+export function LanguagePicker() { const { language, setLanguage, t } = useApp(); return <select className="language-picker" aria-label={t('Language')} value={language} onChange={e => setLanguage(e.target.value as Language)}>{Object.entries(languages).map(([k, v]) => <option value={k} key={k}>{v}</option>)}</select>; }
+export function Auth() { const { t, reloadUser, recovery, setRecovery } = useApp(), [reset, setReset] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [sent, setSent] = useState(false); async function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); const fd = new FormData(e.currentTarget); setBusy(true); setError(''); try {
+    if (recovery) {
+        const { error } = await supabase.auth.updateUser({ password: String(fd.get('password')) });
+        if (error)
+            throw error;
+        setRecovery(false);
+        location.hash = 'jobs';
+        await reloadUser();
+    }
+    else if (reset) {
+        const { error } = await supabase.auth.resetPasswordForEmail(String(fd.get('email')), { redirectTo: new URL(window.ST_BASE, location.origin).href });
+        if (error)
+            throw error;
+        setSent(true);
+    }
+    else {
+        const { error } = await supabase.auth.signInWithPassword({ email: String(fd.get('email')), password: String(fd.get('password')) });
+        if (error)
+            throw error;
+        await reloadUser();
+    }
+}
+catch (e) {
+    setError(e instanceof Error ? e.message : String(e));
+}
+finally {
+    setBusy(false);
+} } return <div className="auth-page"><section className="auth-story"><a className="brand" href="#"><span className="brand-mark">s</span>shine time<sup>®</sup></a><div className="auth-pitch"><span className="eyebrow">SHINE TIME OPERATIONS</span><h1>{t('Cleaning, under control.')}</h1><p>{t('Jobs, people and quality in one workspace.')}</p><div className="auth-decoration" aria-hidden="true"><Icon name="check" size={52}/></div></div><footer>© {new Date().getFullYear()} Shine Time</footer></section><section className="auth-side"><div className="auth-language"><LanguagePicker /></div><form className="login-card" onSubmit={submit}><span className="eyebrow">{t('Workspace')}</span><h2>{t(recovery ? 'New password' : reset ? 'Forgot password?' : 'Sign in')}</h2><fieldset disabled={busy}>{!recovery && <label>{t('Email')}<input name="email" type="email" autoComplete="username" required placeholder="name@company.com"/></label>}{(!reset || recovery) && <label>{t(recovery ? 'New password' : 'Password')}<input name="password" type="password" required minLength={recovery ? 8 : undefined} autoComplete={recovery ? 'new-password' : 'current-password'}/></label>}{error && <p className="error" role="alert">{error}</p>}{sent && <p className="success" role="status">{t('Check your email for the reset link.')}</p>}<Button kind="primary" type="submit">{t(busy ? 'Loading…' : recovery ? 'Save' : reset ? 'Send reset link' : 'Sign in')}<Icon name="arrow"/></Button>{!recovery && <Button kind="text" type="button" onClick={() => { setReset(!reset); setSent(false); setError(''); }}>{t(reset ? 'Sign in' : 'Forgot password?')}</Button>}</fieldset></form></section></div>; }

@@ -1,0 +1,25 @@
+import { useState } from 'react';
+import { useApp } from '../app/context';
+import { api } from '../api/client';
+import { useQuery } from '../api/query';
+import type { Person, Property } from '../domain/models';
+import { Header, Button, Icon, QueryState, Empty, Modal, Form, options, type Field } from '../ui/components';
+export function People() { const { user, t } = useApp(), [kind, setKind] = useState('cleaners'), [editing, setEditing] = useState<Person | 'new' | null>(null), [portfolio, setPortfolio] = useState<Person | null>(null); const q = useQuery<{
+    cleaners?: Person[];
+    clients?: Person[];
+}>(`admin/${kind}`), rows = q.data?.cleaners || q.data?.clients || [], access = user!.role === 'ADMIN'; return <><Header title="Team & clients">{access && <Button kind="primary" onClick={() => setEditing('new')}><Icon name="plus"/>{t('New account')}</Button>}</Header><div className="tabs">{['cleaners', 'clients'].map(k => <button key={k} className={kind === k ? 'selected' : ''} onClick={() => setKind(k)}>{t(k === 'cleaners' ? 'Cleaners' : 'Clients')}</button>)}</div><QueryState {...q} retry={q.reload}>{rows.length ? <div className="people-list">{rows.map(p => <article key={p.id}><div className="avatar">{p.full_name?.slice(0, 1) || 'S'}</div><div className="person-main"><h3>{p.full_name || p.company_name}</h3><p>{p.email}</p><a href={`tel:${p.phone}`}>{p.phone}</a></div><div className="person-info"><span>{kind === 'cleaners' ? t(p.mode || 'FLEX') : p.company_name}</span><span>{t(p.active ? 'Active' : 'Inactive')}</span></div>{access && <div className="actions"><Button onClick={() => setEditing(p)}>{t('Edit')}</Button>{p.account_type === 'PROPERTY_MANAGER' && <Button onClick={() => setPortfolio(p)}>{t('Properties')}</Button>}</div>}</article>)}</div> : <Empty />}</QueryState>{editing && <Modal title={editing === 'new' ? 'New account' : 'Edit'} onClose={() => setEditing(null)}><PersonForm kind={kind} person={editing === 'new' ? undefined : editing} onDone={() => setEditing(null)}/></Modal>}{portfolio && <Modal title={`${t('Properties')} · ${portfolio.full_name}`} onClose={() => setPortfolio(null)}><Portfolio person={portfolio}/></Modal>}</>; }
+function PersonForm({ kind, person, onDone }: {
+    kind: string;
+    person?: Person;
+    onDone: () => void;
+}) { const { t } = useApp(), cleaner = kind === 'cleaners'; const fields: Field[] = [{ name: 'fullName', label: 'Full name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }, { name: 'phone', label: 'Phone', type: 'tel' }, ...(!person ? [{ name: 'password', label: 'Password', type: 'password', required: true }] : []), ...(cleaner ? [{ name: 'mode', label: 'Mode', options: options(['FLEX', 'GUARANTEE'], t) }, { name: 'transport', label: 'Transport', options: options(['CAR', 'PUBLIC', 'WALKING'], t) }, { name: 'maxJobsDay', label: 'Max jobs / day', type: 'number', min: 1, max: 20 }] : [...(!person ? [{ name: 'accountType', label: 'Type', options: options(['OWNER', 'PROPERTY_MANAGER'], t) }] : []), { name: 'companyName', label: 'Company' }, { name: 'billingName', label: 'Billing name' }, { name: 'billingAddress', label: 'Billing address', wide: true }]), ...(person ? [{ name: 'active', label: 'Active', type: 'checkbox' }] : [])]; const initial: Record<string, unknown> = { mode: 'FLEX', transport: 'PUBLIC', maxJobsDay: 5, accountType: 'OWNER', active: true }; if (person)
+    for (const f of fields)
+        initial[f.name] = (person as unknown as Record<string, unknown>)[f.name.replace(/[A-Z]/g, c => '_' + c.toLowerCase())]; return <><Form fields={fields} initial={initial} onCancel={onDone} onSubmit={async (v) => { await api(`admin/${kind}${person ? `/${person.id}` : ''}`, { method: person ? 'PATCH' : 'POST', body: { ...v, ...(cleaner ? { maxJobsDay: Number(v.maxJobsDay) } : {}) } }); onDone(); }}/>{person && <details className="panel"><summary>{t('Reset password')}</summary><Form fields={[{ name: 'password', label: 'New password', type: 'password', required: true }]} onSubmit={v => { if (String(v.password).length < 10)
+    throw new Error(t('Password must contain at least 10 characters')); return api(`admin/${kind}/${person.id}/password`, { method: 'POST', body: v }); }}/></details>}</>; }
+function Portfolio({ person }: {
+    person: Person;
+}) { const { t } = useApp(), q = useQuery<{
+    objectIds: number[];
+}>(`admin/clients/${person.id}/properties`), properties = useQuery<{
+    objects: Property[];
+}>('admin/objects'); return <div className="panel"><QueryState {...q} retry={q.reload}><QueryState {...properties} retry={properties.reload}>{properties.data?.objects.map(o => <div className="section-heading" key={o.id}><div><h3>{o.name}</h3><small>{o.address}</small></div><Form key={`${o.id}-${q.data?.objectIds.includes(o.id)}`} fields={[]} submit={q.data?.objectIds.includes(o.id) ? 'Remove access' : 'Assign'} onSubmit={() => q.data?.objectIds.includes(o.id) ? api(`admin/clients/${person.id}/properties/${o.id}`, { method: 'DELETE' }) : api(`admin/clients/${person.id}/properties`, { method: 'POST', body: { objectId: o.id } })}/></div>)}</QueryState></QueryState></div>; }
