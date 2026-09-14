@@ -9,7 +9,9 @@ function localeKeys(locale){
   const start=source.indexOf(marker);
   assert.notEqual(start,-1,`missing locale ${locale}`);
   const nextLocale=source.slice(start+marker.length).match(/\n\s{4}(?:ru|sk|uk|en): \{/);
-  const end=nextLocale ? start+marker.length+nextLocale.index : source.indexOf('\n  };',start);
+  const end=nextLocale
+    ? start+marker.length+nextLocale.index
+    : source.indexOf('\n    }\n  };',start);
   assert.notEqual(end,-1,`unterminated locale ${locale}`);
   return [...source.slice(start,end).matchAll(/'((?:[^'\\]|\\.)+)'\s*:/g)].map(m=>m[1]);
 }
