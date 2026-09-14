@@ -1,4 +1,4 @@
-/* Lightweight CSV export for operational tables. Exports the currently visible history/report page. */
+﻿/* Lightweight CSV export for operational tables. Exports the currently visible history/report page. */
 (function(){
   function csvCell(value){const s=String(value??'').replace(/\s+/g,' ').trim();return /[\",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
   function exportTable(table,filename){
