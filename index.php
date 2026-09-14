@@ -56,6 +56,7 @@ $publicConfig = [
   <script src="assets/shift-board.js"></script>
   <script src="assets/auto-assignment.js"></script>
   <script src="assets/rescue-automation.js"></script>
+  <script src="assets/dispatcher.js"></script>
   <script src="assets/bulk-operations.js"></script>
   <script src="assets/command-center-live.js"></script>
   <script src="assets/notifications-center.js"></script>
