@@ -27,6 +27,7 @@ $publicConfig = [
   <title>Shine Time Operations</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="assets/styles.css?v=<?= rawurlencode((string)filemtime(__DIR__ . '/assets/styles.css')) ?>">
+  <link rel="stylesheet" href="assets/ui-system.css?v=<?= rawurlencode((string)filemtime(__DIR__ . '/assets/ui-system.css')) ?>">
 </head>
 <body>
   <div id="app"></div>
