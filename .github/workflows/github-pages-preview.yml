@@ -1,0 +1,129 @@
+name: GitHub Pages Preview
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-preview
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build browser bundles
+        run: npm run build
+
+      - name: Prepare static preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          cp -R assets _site/assets
+          cp manifest.webmanifest _site/manifest.webmanifest
+          cp sw.js _site/sw.js 2>/dev/null || true
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ru">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+            <meta name="theme-color" content="#111827">
+            <meta name="robots" content="noindex">
+            <title>Shine Time Operations — Preview</title>
+            <link rel="manifest" href="manifest.webmanifest">
+            <link rel="stylesheet" href="assets/styles.css">
+          </head>
+          <body>
+            <div id="app"></div>
+            <div id="modal-root"></div>
+            <div id="toast-root"></div>
+            <script>
+              window.ST_BASE = './';
+              window.ST_BUILD = 'github-pages-preview';
+              window.ST_SUPABASE = {
+                url: 'https://qbbtroiqioufuucrqair.supabase.co',
+                publishableKey: 'sb_publishable_orOkvZF6ppJH8ObXcgfSMw_D4l8lrKs',
+                functionName: 'st-api'
+              };
+            </script>
+            <script src="assets/i18n.js"></script>
+            <script src="assets/supabase-client.js"></script>
+            <script src="assets/operations-ui-core.js"></script>
+            <script src="assets/live-updates.js"></script>
+            <script src="assets/app.js"></script>
+            <script src="assets/money.js"></script>
+            <script src="assets/operations-extension.js"></script>
+            <script src="assets/operations-validation.js"></script>
+            <script src="assets/monitoring-extension.js"></script>
+            <script src="assets/export.js"></script>
+            <script src="assets/operations-automation.js"></script>
+            <script src="assets/operations-command-center.js"></script>
+            <script src="assets/operations-dashboard.js"></script>
+            <script src="assets/ops-dashboard-widgets.js"></script>
+            <script src="assets/ops-charts.js"></script>
+            <script src="assets/shift-planner.js"></script>
+            <script src="assets/shift-board.js"></script>
+            <script src="assets/auto-assignment.js"></script>
+            <script src="assets/rescue-automation.js"></script>
+            <script src="assets/bulk-operations.js"></script>
+            <script src="assets/dispatch-engine.js"></script>
+            <script src="assets/dispatch-workflow.js"></script>
+            <script src="assets/dispatch-planner.js"></script>
+            <script src="assets/dispatch-recommendations.js"></script>
+            <script src="assets/performance-engine.js"></script>
+            <script src="assets/operations-brain.js"></script>
+            <script src="assets/command-center-live.js"></script>
+            <script src="assets/notifications-center.js"></script>
+            <script src="assets/notifications-tools.js"></script>
+            <script src="assets/payout-engine.js"></script>
+            <script src="assets/payout-queue.js"></script>
+            <script src="assets/finance-tools.js"></script>
+            <script src="assets/schedule-tools.js"></script>
+            <script src="assets/form-tools.js"></script>
+            <script src="assets/table-tools.js"></script>
+            <script src="assets/activity-log.js"></script>
+            <script src="assets/pwa-actions.js"></script>
+            <script>bootstrap();</script>
+          </body>
+          </html>
+          HTML
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
