@@ -53,14 +53,17 @@ $publicConfig = [
   <script src="assets/ops-dashboard-widgets.js"></script>
   <script src="assets/ops-charts.js"></script>
   <script src="assets/shift-planner.js"></script>
+  <script src="assets/shift-board.js"></script>
   <script src="assets/command-center-live.js"></script>
   <script src="assets/notifications-center.js"></script>
   <script src="assets/notifications-tools.js"></script>
   <script src="assets/payout-engine.js"></script>
+  <script src="assets/payout-queue.js"></script>
   <script src="assets/finance-tools.js"></script>
   <script src="assets/schedule-tools.js"></script>
   <script src="assets/form-tools.js"></script>
   <script src="assets/table-tools.js"></script>
+  <script src="assets/activity-log.js"></script>
   <script src="assets/pwa-actions.js"></script>
   <script>bootstrap();</script>
 </body>
