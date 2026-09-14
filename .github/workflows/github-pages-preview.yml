@@ -50,6 +50,7 @@ jobs:
             <link rel="manifest" href="manifest.webmanifest">
             <link rel="stylesheet" href="assets/styles.css">
             <link rel="stylesheet" href="assets/ui-system.css">
+            <link rel="stylesheet" href="assets/job-lifecycle.css">
           </head>
           <body>
             <div id="app"></div>
@@ -101,6 +102,7 @@ jobs:
             <script src="assets/pwa-actions.js"></script>
             <script src="assets/operations-command-surface.js"></script>
             <script src="assets/dispatch-console.js"></script>
+            <script src="assets/job-lifecycle-console.js"></script>
             <script>bootstrap();</script>
           </body>
           </html>
