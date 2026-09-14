@@ -44,6 +44,7 @@ $publicConfig = [
   <script src="assets/app.js?v=<?= rawurlencode((string)filemtime(__DIR__ . '/assets/app.js')) ?>"></script>
   <script src="assets/money.js"></script>
   <script src="assets/operations-extension.js"></script>
+  <script src="assets/operations-validation.js"></script>
   <script src="assets/monitoring-extension.js"></script>
   <script src="assets/export.js"></script>
   <script>bootstrap();</script>
