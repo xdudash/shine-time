@@ -11,7 +11,7 @@ function localeKeys(locale){
   const nextLocale=source.slice(start+marker.length).match(/\n\s{4}(?:ru|sk|uk|en): \{/);
   const end=nextLocale
     ? start+marker.length+nextLocale.index
-    : source.indexOf('\n    }\n  };',start);
+    : source.indexOf('\n  });',start);
   assert.notEqual(end,-1,`unterminated locale ${locale}`);
   return [...source.slice(start,end).matchAll(/'((?:[^'\\]|\\.)+)'\s*:/g)].map(m=>m[1]);
 }
