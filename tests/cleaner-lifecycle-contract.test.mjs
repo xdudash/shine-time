@@ -18,6 +18,16 @@ test('cleaner lifecycle uses protected cleaner endpoints and proof gates', () =>
   assert.match(source, /lat:pos\.coords\.latitude,lng:pos\.coords\.longitude/);
 });
 
+test('cleaner GPS enforcement overrides the permissive check-in fallback', () => {
+  const source = read('assets/cleaner-gps-enforcement.js');
+  const index = read('index.php');
+  assert.match(source, /window\.checkInJob=async id=>/);
+  assert.match(source, /maximumAge:0/);
+  assert.match(source, /accuracyMeters:position\.coords\.accuracy/);
+  assert.doesNotMatch(source, /jobStatus\(id,'ARRIVED'\)/);
+  assert.ok(index.indexOf('assets/app.js') < index.indexOf('assets/cleaner-gps-enforcement.js'));
+});
+
 test('operations dispatch console contains no quick-actions surface', () => {
   const source = read('assets/dispatch-console.js');
   assert.doesNotMatch(source, /Quick actions/i);
