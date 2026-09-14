@@ -38,7 +38,7 @@ test('live updates coalesce refreshes and do not refresh while busy', () => {
 test('live update asset navigation guard stays same-origin and asset-only', () => {
   const source = read('assets/live-updates.js');
   assert.match(source, /r\.origin!==n/);
-  // The generated runtime may contain one or two literal backslashes depending on the bundler pass.
-  // Both forms represent the same escaped asset-path contract; reject any other path shape.
-  assert.match(source, /assets\\{1,2}\/[a-zA-Z0-9_-]+\\{1,2}\./);
+  // Normalize repeated source-level escaping introduced by bundling before checking the path contract.
+  const normalized = source.replace(/\\+/g, '\\');
+  assert.match(normalized, /assets\\\/[a-zA-Z0-9_-]+\\\./);
 });
