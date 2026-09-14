@@ -106,6 +106,7 @@ jobs:
             <script src="assets/table-tools.js"></script>
             <script src="assets/activity-log.js"></script>
             <script src="assets/pwa-actions.js"></script>
+            <script src="assets/preview-demo.js"></script>
             <script>bootstrap();</script>
           </body>
           </html>
