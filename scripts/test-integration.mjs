@@ -30,7 +30,6 @@ try{
  insert into st_client_accounts(user_id,account_type) values(4,'OWNER'),(5,'PROPERTY_MANAGER');
  insert into st_objects(client_id,code,name,address,checkout_time,deadline_time,duration_minutes,payout,client_price) values(1,'INTEGRATION','Test apartment','Synthetic address','08:00','20:00',60,20,40);
  insert into st_cleaner_availability(cleaner_id,service_date,online,from_time,to_time) values(1,current_date+1,true,'08:00','20:00'),(2,current_date+1,true,'08:00','20:00');`);
- // Retry only service startup, before executing any business commands.
  for(let attempt=0;;attempt++){try{await api(0,'health');break}catch(error){if(attempt>=30)throw error;await new Promise(r=>setTimeout(r,1000));}}
  for(let i=0;i<roles.length;i++)assert.equal((await api(i,'me')).user.role,roles[i]);
  const date=(await db.query("select to_char(current_date+1,'YYYY-MM-DD') date")).rows[0].date;
@@ -43,7 +42,7 @@ try{
  const deniedRows=await clients[unrelated].from('st_job_signals').select('*').eq('job_id',booking.id);
  assert.ifError(deniedRows.error);assert.deepEqual(deniedRows.data,[]);
  const privateJobs=await clients[cleaner].from('st_jobs').select('*');
- assert.ok(privateJobs.error || privateJobs.data.length===0,'Raw jobs must not expose private data');
+ assert.ok(privateJobs.error,'Raw jobs must be inaccessible to authenticated clients');
  await assert.rejects(api(unrelated,path),/403|404|assigned|Forbidden|access/i);
  const allowedRows=await clients[cleaner].from('st_job_signals').select('*').eq('job_id',booking.id);
  assert.ifError(allowedRows.error);assert.equal(allowedRows.data.length,1,'Assigned user must pass signal RLS');
