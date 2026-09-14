@@ -53,6 +53,9 @@ $publicConfig = [
   <script src="assets/notifications-center.js"></script>
   <script src="assets/finance-tools.js"></script>
   <script src="assets/schedule-tools.js"></script>
+  <script src="assets/form-tools.js"></script>
+  <script src="assets/table-tools.js"></script>
+  <script src="assets/pwa-actions.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
