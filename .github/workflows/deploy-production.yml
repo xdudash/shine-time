@@ -14,7 +14,6 @@ concurrency:
 
 env:
   SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_REF }}
-  HOSTINGER_DEPLOY_ENABLED: ${{ secrets.PRODUCTION_DEPLOY_ENABLED }}
 
 jobs:
   verify:
@@ -40,7 +39,7 @@ jobs:
   deploy-supabase:
     name: Deploy Supabase
     needs: verify
-    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' || secrets.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -63,7 +62,7 @@ jobs:
   deploy-hostinger:
     name: Deploy Hostinger frontend
     needs: [verify, deploy-supabase]
-    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' || secrets.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment: production
     steps:
