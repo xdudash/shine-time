@@ -49,6 +49,7 @@ $publicConfig = [
   <script src="assets/export.js"></script>
   <script src="assets/operations-automation.js"></script>
   <script src="assets/operations-command-center.js"></script>
+  <script src="assets/operations-dashboard.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
