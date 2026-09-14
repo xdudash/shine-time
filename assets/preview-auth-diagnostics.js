@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  if (window.ST_BUILD !== 'github-pages-preview') return;
+  if (window.ST_PREVIEW !== true) return;
 
   const state = { lastError: null, session: null, api: null, checkedAt: null };
   const esc = value => String(value ?? '').replace(/[&<>\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
@@ -41,9 +41,16 @@
       if (!state.session) { state.api = null; state.checkedAt = Date.now(); render(); return; }
       try {
         const result = await client.functions.invoke((window.ST_SUPABASE || {}).functionName || 'st-api', {
-          body: { route:'/api/me', method:'GET', query:{}, body:{}, clientBuild:window.ST_BUILD || null }
+          body: { route:'/me', method:'GET', query:{}, body:{}, clientBuild:window.ST_BUILD || null }
         });
         state.api = !result?.error;
+        if (result?.error) {
+          try {
+            const response = result.error.context;
+            const detail = response ? await response.clone().json() : null;
+            state.lastError = detail?.error || result.error.message || state.lastError;
+          } catch (_) {}
+        }
       } catch (apiError) {
         state.api = false;
         try {
