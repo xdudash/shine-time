@@ -51,6 +51,8 @@ $publicConfig = [
   <script src="assets/operations-command-center.js"></script>
   <script src="assets/operations-dashboard.js"></script>
   <script src="assets/notifications-center.js"></script>
+  <script src="assets/finance-tools.js"></script>
+  <script src="assets/schedule-tools.js"></script>
   <script>bootstrap();</script>
 </body>
 </html>
